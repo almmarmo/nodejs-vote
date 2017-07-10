@@ -1,0 +1,88 @@
+<!DOCTYPE>
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+        crossorigin="anonymous"></script>
+
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    Nickname:  <input type="text" id="txtNickname" value="Nickname" disabled="disabled" />
+    Session code: <input type="text" id="txtSessionCode" value="1234" disabled="disabled" />
+    <p>
+        <!--Abolute: <span id="spAbsolute"></span>
+            <br />-->
+        Alpha (z): <span id="spAlpha"></span>
+        <br> Beta (x): <span id="spBeta"></span>
+        <br> Gamma (y): <span id="spGamma"></span>
+    </p>
+    <p>
+        <span id="vote">0</span>
+    </p>
+    <script>
+        var url = 'http://almmarmo.hopto.org:5000';
+        var socket = io.connect(url);
+        console.log(socket.id);
+        // if(window.DeviceMotionEvent)
+        // window.ondeviceorientation
+        var hasSupport = 'DeviceOrientationEvent' in window;
+        var voted = false;
+        var voteCount = 0;
+        var txtSessionCode = $('#txtSessionCode');
+        if (hasSupport) {
+            window.addEventListener("devicemotion", handleOrientation, true);
+        }
+        else
+            document.getElementById("vote").innerHTML = "Não suportado.";
+
+        function handleOrientation(e) {
+            if (txtSessionCode.val() != '') {
+                var zSpan = document.getElementById("spAlpha");
+                //var absolute =document.getElementById("spAbsolute");
+                var xSpan = document.getElementById("spBeta");
+                var ySpan = document.getElementById("spGamma");
+
+                var acc = e.accelerationIncludingGravity;
+                var z = acc.z != null ? acc.z.toFixed(0) : 0;
+                var x = acc.x != null ? acc.x.toFixed(0) : 0;
+                var y = acc.y != null ? acc.y.toFixed(0) : 0;
+
+                zSpan.innerHTML = z;
+                //absolute.innerHTML = e.absolute;
+                xSpan.innerHTML = x;
+                ySpan.innerHTML = y;
+                //-2, 7, 6
+                //-3, 7, 7
+                //-3, 5, 8
+                //-3, 7, 6
+                //-5, 5, 7
+                if ((x <= -2 && x >= -5) && (y >= 5 && y <= 7) && (z >= 6 && z <= 8)) {
+                    voteCount++;
+                    document.getElementById("vote").innerHTML = voteCount;
+                    voted = true;
+                }
+                if ((x >= 2 && x <= 5) && (y >= 5 && y <= 7) && (z >= 6 && z <= 8)) {
+                    voteCount--;
+                    document.getElementById("vote").innerHTML = voteCount;
+                    voted = false;
+                }
+
+                socket.emit('sendData', {
+                    'sessionCode': txtSessionCode.val(),
+                    'nickname': $('#txtNickname').val(),
+                    'accelerationData': {
+                        'x': x,
+                        'y': y,
+                        'z': z
+                    },
+                    'voted': voted
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>

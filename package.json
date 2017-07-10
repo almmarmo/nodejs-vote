@@ -1,0 +1,24 @@
+{
+  "name": "smart-vote",
+  "description": "Realtime vote app for smartphones",
+  "version": "1.0.0",
+  "author": "Andre Luis Mamo",
+  "main": "./server.js",
+  "keywords": [
+    "stream",
+    "vote"
+  ],
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3",
+    "socket.io": "^1.7.4"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "licenses": [
+    {
+      "type": "MIT"
+    }
+  ]
+}

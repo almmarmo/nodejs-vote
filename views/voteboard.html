@@ -1,0 +1,50 @@
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+        crossorigin="anonymous"></script>
+
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <div id="container">
+        <div id="panel">
+            session: <span id="session"></span><br> x: <span id="x"></span><br> y: <span id="y"></span><br> z: <span id="z"></span>
+            <br> Voted: <span id="voted"></span>
+        </div>
+        <!--<br>
+        <div>
+            Teste de contas<br>
+            x - y : <span id="x-y"></span><br>
+            x - z : <span id="x-z"></span><br>
+            x - y - z : <span id="x-y-z"></span>
+        </div>-->
+    </div>
+</body>
+<script>
+    var url = 'http://almmarmo.hopto.org:5000';
+    var socket = io.connect(url);
+    var votes;
+
+    socket.on('accelerationStream', function (data) {
+        $('#container').append();
+        data.forEach(function (element) {
+            var acc = element.accelerationData;
+            var x = acc.x;
+            var z = acc.z;
+            var y = acc.y;
+            var html = '<div id="panel">nickname: '+element.nickname+'<br> session: '+element.socketId+'<br> x: '+x+'<br> y: '+y+'<br> z: '+z+'<br> Voted: '+element.voted+'</div>';
+            $('#container').html(html);
+            // $('#x').text(x);
+            // $('#y').text(y);
+            // $('#z').text(z);
+            // $('#x-y').text(x - y);
+            // $('#x-z').text(x - z);
+            // $('#x-y-z').text(x - y - z);
+        }, this);
+    });
+
+</script>
+
+</html>

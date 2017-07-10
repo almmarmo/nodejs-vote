@@ -1,0 +1,52 @@
+<!DOCTYPE>
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+        crossorigin="anonymous"></script>
+
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    Pergunta: <input type="text" id="txtQuestion" />
+    <script>
+        var url = 'http://192.168.0.21:5000';
+        var socket = io.connect(url);
+        // if(window.DeviceMotionEvent)
+        // window.ondeviceorientation
+        var hasSupport = 'DeviceOrientationEvent' in window;
+        if (hasSupport) {
+            window.addEventListener("devicemotion", handleOrientation, true);
+        }
+        else
+            alert('Not supported.');
+
+        function handleOrientation(e) {
+            var z = e.accelerationIncludingGravity.z;
+            var x = e.accelerationIncludingGravity.x;
+            var y = e.accelerationIncludingGravity.y;
+            var question = $('#txtQuestion').val();
+            if (x.toFixed(0) == -5 && question != '') {
+                socket.emit('sendQuestion', {
+                    'question': question
+                });
+                $('#txtQuestion').val('');
+            }
+
+            socket.emit('sendData', {
+                'answerCode': 'cu',
+                'nickname': 'ku',
+                'accelerationData': {
+                    'x': x,
+                    'y': y,
+                    'z': z
+                },
+                'voted': true
+            });
+
+        }
+    </script>
+</body>
+
+</html>
