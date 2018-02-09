@@ -42,9 +42,10 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('sendData', function (data) {
         //devices[data.nickname] = data;
+        let currentDatetime = new Date();
         data.socketId = socket.id;
         voteManager.registerClient(data);
-        console.log('sendData called.');
+        console.log('sendData called. ' + currentDatetime.toLocaleDateString() + ' ' + currentDatetime.toLocaleTimeString());
         io.sockets.emit('accelerationStream', voteManager.getClients());
     });
     socket.on('sendQuestion', function (data) {

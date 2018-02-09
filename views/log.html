@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/VectorClass.js"></script>
+    <script type="text/javascript">
+        window.onload = function () {
+
+            var url = 'http://almmarmo.hopto.org:5000';
+            var socket = io.connect(url);
+            var index = 0;
+            var dataLength = 200; // number of dataPoints visible at any point
+
+
+            var sampleInterval = 0;
+            var xVal = 0;
+            socket.on('accelerationStream', function (data) {
+                if (sampleInterval > 5) {
+                    var acc = data[0].accelerationData;
+                    var vector = new Vector(acc.x, acc.y, acc.z);
+
+                    dps.push({ x: xVal, y: vector.X });
+                    dpsY.push({ x: xVal, y: vector.Y });
+                    dpsZ.push({x: xVal, y: vector.Z });
+                    dpsForce.push({x: xVal, y: (vector.X*vector.X)+(vector.Y*vector.Y)+(vector.Z*vector.Z)});
+                    xVal++;
+                    if (dps.length > dataLength){
+                        dps.shift();
+                        dpsY.shift();
+                        dpsZ.shift();
+                        dpsForce.shift();
+                    }
+
+                    chart.render();
+                    chartY.render();
+                    chartZ.render();
+                    chartForce.render();
+                    sampleInterval = 0;
+                }
+                else {
+                    sampleInterval++;
+                }
+            });
+
+
+
+            var yVal = 100;
+            var updateInterval = 100;
+
+            var updateChart = function (count) {
+                count = count || 1;
+                // count is number of times loop runs to generate random dataPoints.
+
+                for (var j = 0; j < count; j++) {
+                    yVal = yVal + Math.round(5 + Math.random() * (-5 - 5));
+                    dps.push({
+                        x: xVal,
+                        y: yVal
+                    });
+                    xVal++;
+                };
+                if (dps.length > dataLength) {
+                    dps.shift();
+                }
+
+                chart.render();
+
+            };
+
+        }
+    </script>
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</head>
+
+<body>
+    <div id="divLog">
+
+    </div>
+</body>
+
+</html>

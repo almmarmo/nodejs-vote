@@ -5,6 +5,7 @@
         crossorigin="anonymous"></script>
 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/VectorClass.js"></script>
 </head>
 
 <body>
@@ -13,6 +14,7 @@
             session: <span id="session"></span><br> x: <span id="x"></span><br> y: <span id="y"></span><br> z: <span id="z"></span>
             <br> Voted: <span id="voted"></span>
         </div>
+        <Br>
         <!--<br>
         <div>
             Teste de contas<br>
@@ -21,20 +23,45 @@
             x - y - z : <span id="x-y-z"></span>
         </div>-->
     </div>
+    <div id="csv"></div>
 </body>
 <script>
     var url = 'http://almmarmo.hopto.org:5000';
     var socket = io.connect(url);
     var votes;
+    var sampleCount = 0;
+    var iniX = 0;
+    var iniY = 0;
+    var iniZ = 0;
 
     socket.on('accelerationStream', function (data) {
         $('#container').append();
         data.forEach(function (element) {
             var acc = element.accelerationData;
-            var x = acc.x;
-            var z = acc.z;
-            var y = acc.y;
-            var html = '<div id="panel">nickname: '+element.nickname+'<br> session: '+element.socketId+'<br> x: '+x+'<br> y: '+y+'<br> z: '+z+'<br> Voted: '+element.voted+'</div>';
+            var vector = new Vector(acc.x, acc.y, acc.z);
+            var x = vector.X;
+            var z = vector.Z;
+            var y = vector.Y;
+            var rxyz= vector.getForceValue();
+            var rxy = Math.sqrt(vector.X^2+vector.Y^2);
+            var rxz = Math.sqrt(x*x+z*z);
+            var ryz = Math.sqrt(y^2+z^2);
+            
+            var html = '<div id="panel">nickname: '+element.nickname+'<br> session: '+element.socketId+'<br> x: '+vector.X+'<br> y: '+vector.Y+'<br> z: '+vector.Z+'<br> Voted: '+element.voted+'<br> R('+vector.X+','+vector.Y+','+vector.Z+'):'+rxyz.toFixed()+'<br> R(x,y):'+rxy.toFixed()+'<br> R(x,z):'+rxz.toFixed()+'<br> R(y,z):'+ryz.toFixed()+'</div>';
+
+            html += '<br>Seno(x): ' + Math.sin(x);
+            html += '<br>Seno(y): ' + Math.sin(y);
+            html += '<br>Seno(z): ' + Math.sin(z);
+
+            if(sampleCount == 0){
+                iniX = x;
+                iniY = y;
+                iniZ = z;
+            }
+
+            if(rxz.toFixed() == 8 && ryz.toFixed() == 4 && rxyz > 15)
+                html += "<br>VOTED!";
+
             $('#container').html(html);
             // $('#x').text(x);
             // $('#y').text(y);
@@ -42,6 +69,15 @@
             // $('#x-y').text(x - y);
             // $('#x-z').text(x - z);
             // $('#x-y-z').text(x - y - z);
+            
+                // $('#csv').prepend('<span>'+d.toFixed() + '</span><br>');
+                // if(sampleCount < 20)
+                //     sampleCount++;
+                // else{
+                //     sampleCount = 0;
+                //     if(x > iniX && z > iniZ)
+                //         console.log(x + ',' + y + ',' + z);
+                // }
         }, this);
     });
 

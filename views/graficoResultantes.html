@@ -1,0 +1,122 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/VectorClass.js"></script>
+    <script type="text/javascript">
+        window.onload = function () {
+
+            var url = 'http://almmarmo.hopto.org:5000';
+            var socket = io.connect(url);
+            var index = 0;
+            var dps = []; // dataPoints
+            var dpsY = [];
+            var dpsResulting = [];
+            var dataLength = 200; // number of dataPoints visible at any point
+
+            var chart = new CanvasJS.Chart("chartContainer", {
+                title: {
+                    text: "Eixo X"
+                },
+                data: [{
+                    lineColor: "blue",
+                    type: "line",
+                    dataPoints: dps
+                }]
+            });
+            var chartY = new CanvasJS.Chart("chartContainerEixoY", {
+                title: {
+                    text: "Eixo Y"
+                },
+                data: [{
+                    lineColor: "green",
+                    type: "line",
+                    dataPoints: dpsY
+                }]
+            });
+            
+            var chartResulting = new CanvasJS.Chart("chartContainerResulting", {
+                title: {
+                    text: "Resultante de X e Y"
+                },
+                data: [{
+                    lineColor: "pink",
+                    type: "line",
+                    dataPoints: dpsResulting
+                }]
+            });
+
+            var sampleInterval = 0;
+            var xVal = 0;
+            socket.on('accelerationStream', function (data) {
+                if (sampleInterval > 5) {
+                    var acc = data[0].accelerationData;
+                    var vector = new Vector(acc.x, acc.y, acc.z);
+
+                    dps.push({ x: xVal, y: vector.X });
+                    dpsY.push({ x: xVal, y: vector.Y });
+                    dpsResulting.push({x: xVal, y: (vector.X*vector.X)+(vector.Y*vector.Y)});
+                    xVal++;
+                    if (dps.length > dataLength){
+                        dps.shift();
+                        dpsY.shift();
+                        dpsResulting.shift();
+                    }
+
+                    chart.render();
+                    chartY.render();
+                    chartResulting.render();
+                    sampleInterval = 0;
+                }
+                else {
+                    sampleInterval++;
+                }
+            });
+
+
+
+            var yVal = 100;
+            var updateInterval = 100;
+
+            var updateChart = function (count) {
+                count = count || 1;
+                // count is number of times loop runs to generate random dataPoints.
+
+                for (var j = 0; j < count; j++) {
+                    yVal = yVal + Math.round(5 + Math.random() * (-5 - 5));
+                    dps.push({
+                        x: xVal,
+                        y: yVal
+                    });
+                    xVal++;
+                };
+                if (dps.length > dataLength) {
+                    dps.shift();
+                }
+
+                chart.render();
+
+            };
+
+            // generates first set of dataPoints
+            //updateChart(dataLength);
+
+            // update chart after specified time. 
+            //setInterval(function () { updateChart() }, updateInterval);
+
+        }
+    </script>
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</head>
+
+<body>
+    <div id="chartContainer" style="height: 300px; width:50%;float:left;">
+    </div>
+    <div id="chartContainerEixoY" style="height: 300px; width:50%;float:left;">
+    </div>
+    <div id="chartContainerResulting" style="height: 300px; width:50%;float:left;">
+    </div>
+</body>
+
+</html>

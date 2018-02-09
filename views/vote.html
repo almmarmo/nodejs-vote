@@ -2,16 +2,16 @@
 <html>
 
 <head>
-    <script src="https://code.jquery.com/jquery-3.1.1.min.js"
-        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
         crossorigin="anonymous"></script>
 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/VectorClass.js"></script>
 </head>
 
 <body>
-    Nickname:  <input type="text" id="txtNickname" value="Nickname" disabled="disabled" />
-    Session code: <input type="text" id="txtSessionCode" value="1234" disabled="disabled" />
+    Nickname: <input type="text" id="txtNickname" value="Nickname" disabled="disabled" /> Session code: <input type="text"
+        id="txtSessionCode" value="1234" disabled="disabled" />
     <p>
         <!--Abolute: <span id="spAbsolute"></span>
             <br />-->
@@ -22,22 +22,28 @@
     <p>
         <span id="vote">0</span>
     </p>
+    <div id="historico"></div>
     <script>
         var url = 'http://almmarmo.hopto.org:5000';
+        //var url = 'http://192.168.0.21:5000';
         var socket = io.connect(url);
-        console.log(socket.id);
+        //console.log(socket.id);
         // if(window.DeviceMotionEvent)
         // window.ondeviceorientation
         var hasSupport = 'DeviceOrientationEvent' in window;
         var voted = false;
         var voteCount = 0;
         var txtSessionCode = $('#txtSessionCode');
+        var actualVector = new Vector(0, 0, 0);
+        var oldVector = new Vector(0, 0, 0);
+        var vectors = [];
         if (hasSupport) {
             window.addEventListener("devicemotion", handleOrientation, true);
         }
         else
             document.getElementById("vote").innerHTML = "Não suportado.";
 
+        var sampleInternval = 0;
         function handleOrientation(e) {
             if (txtSessionCode.val() != '') {
                 var zSpan = document.getElementById("spAlpha");
@@ -46,37 +52,53 @@
                 var ySpan = document.getElementById("spGamma");
 
                 var acc = e.accelerationIncludingGravity;
-                var z = acc.z != null ? acc.z.toFixed(0) : 0;
-                var x = acc.x != null ? acc.x.toFixed(0) : 0;
-                var y = acc.y != null ? acc.y.toFixed(0) : 0;
+                oldVector.copyVector(actualVector);
+                actualVector.X = acc.x != null ? acc.x : 0;
+                actualVector.Y = acc.y != null ? acc.y : 0;
+                actualVector.Z = acc.z != null ? acc.z : 0;
 
-                zSpan.innerHTML = z;
-                //absolute.innerHTML = e.absolute;
-                xSpan.innerHTML = x;
-                ySpan.innerHTML = y;
-                //-2, 7, 6
-                //-3, 7, 7
-                //-3, 5, 8
-                //-3, 7, 6
-                //-5, 5, 7
-                if ((x <= -2 && x >= -5) && (y >= 5 && y <= 7) && (z >= 6 && z <= 8)) {
-                    voteCount++;
-                    document.getElementById("vote").innerHTML = voteCount;
-                    voted = true;
+                // var z = acc.z != null ? acc.z.toFixed(0) : 0;
+                // var x = acc.x != null ? acc.x.toFixed(0) : 0;
+                // var y = acc.y != null ? acc.y.toFixed(0) : 0;
+                var forceResult = actualVector.getForceValue();// Math.sqrt(x*x+y*y+z*z).toFixed(0);
+
+                if (sampleInternval > 5) {
+                    var moveVector = actualVector.getMovementVector(vectors[0]);
+
+                    zSpan.innerHTML = actualVector.Z;
+                    //absolute.innerHTmove.absolute;
+                    xSpan.innerHTML = actualVector.X;
+                    ySpan.innerHTML = actualVector.Y;
+
+                    //-2, 7, 6
+                    //-3, 7, 7
+                    //-3, 5, 8
+                    //-3, 7, 6
+                    //-5, 5, 7
+                    //z2-z1 > 0 -> z1=10, z2=-2 => -2+10=8 ok
+                    //          -> z1=7 , z2=2  => 2-7=-5  nok
+                    //          -> z1=10, z2=15 => 15-10=5 nok
+                    //          -> z1=2,  z2=-10
+                    if ((moveVector.X >= 10 && moveVector.X <= 13) && (moveVector.Y >= 7) && (moveVector.z >= -11 && moveVector.Z <= -9) && forceResult > 15) {
+                        //voteCount++;
+                        document.getElementById("vote").innerHTML = voted;
+                        voted = true;
+                    }
+                    sampleInternval = 0;
+                    vectors = [];
                 }
-                if ((x >= 2 && x <= 5) && (y >= 5 && y <= 7) && (z >= 6 && z <= 8)) {
-                    voteCount--;
-                    document.getElementById("vote").innerHTML = voteCount;
-                    voted = false;
+                else {
+                    vectors.push(actualVector);
+                    sampleInternval++;
                 }
 
                 socket.emit('sendData', {
                     'sessionCode': txtSessionCode.val(),
                     'nickname': $('#txtNickname').val(),
                     'accelerationData': {
-                        'x': x,
-                        'y': y,
-                        'z': z
+                        'x': actualVector.X,
+                        'y': actualVector.Y,
+                        'z': actualVector.Z
                     },
                     'voted': voted
                 });
